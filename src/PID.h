@@ -1,6 +1,8 @@
 #ifndef PID_H
 #define PID_H
 
+#include<time.h>
+
 class PID {
 public:
   /*
@@ -16,6 +18,10 @@ public:
   double Kp;
   double Ki;
   double Kd;
+
+  // Counter
+  unsigned long long int ticks;
+  clock_t old_t;
 
   /*
   * Constructor
