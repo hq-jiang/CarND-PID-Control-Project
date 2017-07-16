@@ -1,92 +1,56 @@
-# CarND-Controls-PID
-Self-Driving Car Engineer Nanodegree Program
+## PID Controller Project
 
----
+In this Udacity project we have to implement and tune a PID controller for the autonomous car in the Udacity simulator.
 
-## Dependencies
+This project contains the following files:
+- src folder and CMakeLists.txt to for running the code
+- install scripts for the uWebSockets to interface the simulator
+- the Udacity simulator is not part of this repository but can be downloaded here: https://github.com/udacity/self-driving-car-sim/releases
 
-* cmake >= 3.5
- * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools]((https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
-* [uWebSockets](https://github.com/uWebSockets/uWebSockets)
-  * Run either `./install-mac.sh` or `./install-ubuntu.sh`.
-  * If you install from source, checkout to commit `e94b6e1`, i.e.
-    ```
-    git clone https://github.com/uWebSockets/uWebSockets 
-    cd uWebSockets
-    git checkout e94b6e1
-    ```
-    Some function signatures have changed in v0.14.x. See [this PR](https://github.com/udacity/CarND-MPC-Project/pull/3) for more details.
-* Simulator. You can download these from the [project intro page](https://github.com/udacity/self-driving-car-sim/releases) in the classroom.
 
-There's an experimental patch for windows in this [PR](https://github.com/udacity/CarND-PID-Control-Project/pull/3)
+## Contents
+#### [1. PID Basics](#pid-basics)
+#### [2. Manual Tuning](#manual-tuning)
+#### [3. Auto Tuning](#auto-tuning)
 
-## Basic Build Instructions
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./pid`. 
 
-## Editor Settings
+### PID Basics
 
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
+The PID controller is the most used controller in the field and last time I checked, 95% of all controllers were PID. The reason lies in the simplicity of its algorithm and the wide array of use cases. As the name "PID" implies the controller consists of three parts, the proportional (P), the integral (I) and the derivative (D) part. Let's take a look at these.
 
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
+##### P controller
+The P controller takes in a error and returns a control signal with proportional to the error. This is the most basic part and it means that we steer harder if we are farther from the middle of the road.
 
-## Code Style
+##### I controller
+The I controller accumulates the error and returns a control signal proportional to the integral. This part is important to eliminate steady-state errors and is usually used if we have a delay in the system, most common in the form of a constant systematic error.
 
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
+##### D controller
+The D controller returns a control signal proportional to the rate of error. In our case it can be seen as a damping (this video explains it very well: https://www.youtube.com/watch?v=4Y7zG48uHRo). The higher the D-gain the harder the damping is. Low damping might allow our system to oscillate while high damping will slow down the reaction time.
 
-## Project Instructions and Rubric
+##### Our control system
+Depending on our system we might not need all gains from the PID controller. The field is studied very well, especially for linear systems. If we examine the motion model of our car, we can see that we have a nonlinear system. It has something similar to integral behavior or integral behavior with a delay.  
+If we look into the literature, we can see that a PD controller should be sufficient for the job. To be specific, a PID controller is ideal for a steady-state IT1 system (straight road) but a PD controller is better for a unsteady IT1 system (curved road).
 
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
+##### Tuning strategy:
+Our lecturer Sebastian Thrun suggested an automated process called 'twiggle' for this assignment. For this to work, we need a set of parameters which at least keep the car on track or we can't calculate the error. Therefore, we manually tune the parameters first and use twiggle to fine tune our system.
 
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/e8235395-22dd-4b87-88e0-d108c5e5bbf4/concepts/6a4d8d42-6a04-4aa6-b284-1697c0fd6562)
-for instructions and the project rubric.
+### Manual Tuning
+First, I tried to tune the controller with a empirical method found on wikipedia (https://en.wikipedia.org/wiki/PID_controller). It suggests to start from zero for all parameters and increase the P-gain until oscillation. The cut the P-gain in half and increase the I-gain until the offset is corrected in sufficient time and at last use the D-gain the get rid of any oscillations. This might work for PT1 systems but for our car this method did not work and made our car unstable, in the sense that the oscillation amplitude increases indefinitely. The problem lies in the integral behavior in of our system. We want the P and D-gain to carry most of the weight and not the I-gain, especially for curves. The I-gain is either to slow, or so strong that we get too much oscillation.  
+The correct way to tune our parameters is to increase our P-gain until oscillation and reduce it to less than a half and then use the D-gain as a damping. The sweet spot is critical damping (also see video), the point where oscillation disappears. The I controller is not mandatory, so I kept the I-gain low.  
+We can print out the proportion of each controller to check which controller is most active and we try to keep the I proportion low.
 
-## Hints!
 
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
+After trial and error, I have found these parameters to be sufficient:  
+P: 0.1  
+I: 0.01  
+D: 0.001
 
-## Call for IDE Profiles Pull Requests
 
-Help your fellow students!
-
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
-
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
-
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
-
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
+### Auto Tuning
+When we succeeded to keep the car on track we can then proceed with the auto tuning. We basically change one parameter at a time and observe the cross-track error over one lap. If it improves the error we increase this parameter further, otherwise we want to lower the increase.  
+With this algorithm we improve our parameters to the following:  
+P: 0.12  
+I: 0.01  
+D: 0.0012  
+Unfortunately, this strategy does not allow for big parameter changes, since big changes might cause our car to get off track. Therefore we cannot exceed the local minimum of our parameter set.

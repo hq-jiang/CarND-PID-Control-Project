@@ -28,18 +28,37 @@ std::string hasData(std::string s) {
   return "";
 }
 
+enum state_enum{
+    skip_first_enter,
+    init,
+    parameter_tune,
+    parameter_tune_reverse
+};
+
 int main()
 {
   uWS::Hub h;
 
   PID pid;
   // TODO: Initialize the pid variable.
-  pid.Init(0.1, 0.01, 0.001);
+  double cte_sum = 0;
+  double best_cte_sum = std::numeric_limits<double>::max();
+  int p_id = 0;
+  int epoch=0;
+  state_enum state = skip_first_enter;
+  std::vector<double> params={0.1, 0.01, 0.001};
+  std::vector<double> delta_params={0.02, 0.002, 0.0002};
+  std::vector<double> best_params(3);
+  pid.Init(params[0], params[1], params[2]);
 
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+
+
+  h.onMessage([&pid, &cte_sum, &best_cte_sum, &params, &delta_params, &p_id, &state, &best_params, &epoch](
+              uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
+
     if (length && length > 2 && data[0] == '4' && data[1] == '2')
     {
       auto s = hasData(std::string(data).substr(0, length));
@@ -47,6 +66,8 @@ int main()
         auto j = json::parse(s);
         std::string event = j[0].get<std::string>();
         if (event == "telemetry") {
+
+
           // j[1] is the data JSON object
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
@@ -58,17 +79,89 @@ int main()
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
+          cte_sum += fabs(cte);
+
+
+          if (pid.ticks%1500==0){
+              epoch+=1;
+              switch (state){
+                  case skip_first_enter:
+                      state=init;
+                      break;
+                  case init:
+                      best_cte_sum = cte_sum;
+                      best_params[0] = params[0];
+                      best_params[1] = params[1];
+                      best_params[2] = params[2];
+                      params[p_id] += delta_params[p_id];
+                      pid.Init(params[0], params[1], params[2]);
+                      cte_sum = 0;
+                      state = parameter_tune;
+                      break;
+                  case parameter_tune:
+                      if (cte_sum < best_cte_sum){
+                          best_cte_sum = cte_sum;
+                          best_params[0] = params[0];
+                          best_params[1] = params[1];
+                          best_params[2] = params[2];
+                          delta_params[p_id] *= 1.1;
+                          p_id = (p_id+2) % 4;
+                          params[p_id] += delta_params[p_id];
+                          pid.Init(params[0], params[1], params[2]);
+                          cte_sum=0;
+                      }
+                      else {
+                          params[p_id] -= 2*delta_params[p_id];
+                          pid.Init(params[0], params[1], params[2]);
+                          cte_sum=0;
+                          state = parameter_tune_reverse;
+                      }
+                      break;
+
+                  case parameter_tune_reverse:
+
+                      if (cte_sum < best_cte_sum){
+                          best_cte_sum = cte_sum;
+                          best_params[0] = params[0];
+                          best_params[1] = params[1];
+                          best_params[2] = params[2];
+                          delta_params[p_id] *= 1.1;
+                          p_id = (p_id+2) % 4;
+                          params[p_id] += delta_params[p_id];
+                          pid.Init(params[0], params[1], params[2]);
+                          cte_sum=0;
+                          state = parameter_tune;
+                      }
+                      else {
+                          params[p_id] += delta_params[p_id];
+                          pid.Init(params[0], params[1], params[2]);
+                          delta_params[p_id] *= 0.9;
+                          p_id = (p_id+2) % 4;
+                          cte_sum=0;
+                          state = parameter_tune;
+                      }
+                      break;
+              }
+
+          }
+          printf("epoch: %d \n", epoch);
+          printf("P: %.2f, I: %.3f, D: %.5f \n", params[0], params[1], params[2]);
+          if (state!=init){
+              printf("best run: %.2f at epoch %d \n", best_cte_sum, epoch);
+              printf("with params P: %.2f, I: %.3f, D: %.5f \n", best_params[0], best_params[1], best_params[2]);
+          }
 
           pid.UpdateError(cte);
           steer_value = pid.TotalError();
+
           // DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+          //std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          //std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {
