@@ -32,7 +32,7 @@ The D controller returns a control signal proportional to the rate of error. In 
 Depending on our system we might not need all gains from the PID controller. The field is studied very well, especially for linear systems. If we examine the motion model of our car, we can see that we have a nonlinear system. It has something similar to integral behavior or integral behavior with a delay.  
 If we look into the literature, we can see that a PD controller should be sufficient for the job. To be specific, a PID controller is ideal for a steady-state IT1 system (straight road) but a PD controller is better for a unsteady IT1 system (curved road).
 
-| Plant | Controller |
+| Plant | Controller | ||||
 | ------------- |:-------------:|:-----:|:-----:|:-----:|:-----:|
 |   | P | I | PI | PD | PID |
 | P | - | + | +  | -  | over-engineered |
