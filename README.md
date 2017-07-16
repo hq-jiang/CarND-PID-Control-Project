@@ -40,7 +40,8 @@ If we look into the literature, we can see that a PD controller should be suffic
 | PT1 | + | - | + (u&s) | - | over-engineered |
 | PTn | - | - | + | - | + (u&s) |
 | ITn | - | unstable | - | + (u) | + (s)|
-| Tt  | - | - | + (u&s) | - | - |  
+| Tt  | - | - | + (u&s) | - | - |
+  
 __u__: unsteady system  
 __s__: steady system  
 
