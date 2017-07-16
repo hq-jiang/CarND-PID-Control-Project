@@ -49,9 +49,16 @@ Our lecturer Sebastian Thrun suggested an automated process called 'twiggle' for
 
 ### Manual Tuning
 First, I tried to tune the controller with a empirical method found on wikipedia (https://en.wikipedia.org/wiki/PID_controller). It suggests to start from zero for all parameters and increase the P-gain until oscillation. The cut the P-gain in half and increase the I-gain until the offset is corrected in sufficient time and at last use the D-gain the get rid of any oscillations. This might work for PT1 systems but for our car this method did not work and made our car unstable, in the sense that the oscillation amplitude increases indefinitely. The problem lies in the integral behavior in of our system. We want the P and D-gain to carry most of the weight and not the I-gain, especially for curves. The I-gain is either to slow, or so strong that we get too much oscillation.  
+
+PI contoller:  
+![PI controller](./gifs/PI_controller.gif)
+
+
 The correct way to tune our parameters is to increase our P-gain until oscillation and reduce it to less than a half and then use the D-gain as a damping. The sweet spot is critical damping (also see video), the point where oscillation disappears. The I controller is not mandatory, so I kept the I-gain low.  
 We can print out the proportion of each controller to check which controller is most active and we try to keep the I proportion low.
 
+PD contoller:  
+![PD controller](./gifs/PD_controller.gif)
 
 After trial and error, I have found these parameters to be sufficient:  
 P: 0.1  
