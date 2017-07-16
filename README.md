@@ -33,7 +33,7 @@ Depending on our system we might not need all gains from the PID controller. The
 If we look into the literature, we can see that a PD controller should be sufficient for the job. To be specific, a PID controller is ideal for a steady-state IT1 system (straight road) but a PD controller is better for a unsteady IT1 system (curved road).
 
 | Plant | Controller |
-| ------------- |:-------------:| -----:|
+| ------------- |:-------------:|:-----:|:-----:|:-----:|:-----:|
 |   | P | I | PI | PD | PID |
 | P | - | + | +  | -  | over-engineered |
 | I | + (u) | unstable | + | + (s) | over-engineered |
