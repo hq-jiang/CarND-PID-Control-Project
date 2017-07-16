@@ -46,8 +46,8 @@ int main()
   int p_id = 0;
   int epoch=0;
   state_enum state = skip_first_enter;
-  std::vector<double> params={0.1, 0.01, 0.001};
-  std::vector<double> delta_params={0.02, 0.002, 0.0002};
+  std::vector<double> params={0.12, 0.01, 0.0012};
+  std::vector<double> delta_params={0.05, 0.02, 0.0002};
   std::vector<double> best_params(3);
   pid.Init(params[0], params[1], params[2]);
 

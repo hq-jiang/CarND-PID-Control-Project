@@ -43,7 +43,7 @@ double PID::TotalError() {
     //std::cout << "Ticks: " << ticks << std::endl;
 
     //std::cout << "control_sum: " << control_sum << std::endl;
-    //printf("P: %.2f, I: %.2f, D: %.2f \n", fabs(control_p/control_sum), fabs(control_i/control_sum), fabs(control_d/control_sum));
+    printf("Shares:  P: %.2f, I: %.2f, D: %.2f \n", fabs(control_p/control_sum), fabs(control_i/control_sum), fabs(control_d/control_sum));
     old_t = clock();
 
     return steering_angle;
